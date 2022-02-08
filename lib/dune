@@ -1,2 +1,4 @@
 (library
- (name santorni))
+ (name santorni)
+ (libraries yojson core ppx_deriving_yojson.runtime)
+ (preprocess (pps ppx_deriving_yojson)))

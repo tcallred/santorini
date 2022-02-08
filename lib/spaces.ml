@@ -1,12 +1,12 @@
 open Utils
 
+type space = int * int [@@deriving yojson]
+
 module Space = struct
-  type t = int * int
+  type t = space
 
   let compare = compare
 end
-
-type space = Space.t
 
 module SpacesMap = Map.Make (Space)
 
@@ -26,6 +26,16 @@ let list_of_spaces spaces =
   List.map
     (fun row -> List.map (fun space -> SpacesMap.find space spaces) row)
     space_coords2d
+
+let spaces_of_list (lst : int list list) : spaces =
+  let open List in
+  fold_left
+    (fun (map : spaces) (i : int) ->
+      fold_left
+        (fun (map : spaces) (j : int) ->
+          SpacesMap.add (i + 1, j + 1) (nth (nth lst i) j) map)
+        map (range 5))
+    SpacesMap.empty (range 5)
 
 let build_on space spaces =
   SpacesMap.update space

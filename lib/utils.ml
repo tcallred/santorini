@@ -7,3 +7,6 @@ let list_comp l1 l2 =
   let* x = l1 in
   let+ y = l2 in
   (x, y)
+
+let nth2d lst i j = List.nth (List.nth lst j) i
+let nth3d lst i j k = List.nth (List.nth (List.nth lst k) j) i
