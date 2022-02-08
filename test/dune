@@ -1,2 +1,5 @@
-(test
- (name santorini))
+(tests
+ (names utils_test)
+ (libraries
+    alcotest
+    santorini))
