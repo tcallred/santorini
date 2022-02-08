@@ -1,4 +1,4 @@
 (executable
- (public_name santorni)
+ (public_name santorini)
  (name main)
- (libraries santorni))
+ (libraries santorini))
