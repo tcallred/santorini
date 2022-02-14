@@ -1,6 +1,5 @@
 open Spaces
 open Player
-open Result
 
 type board = { turn : int; spaces : spaces; players : player * player }
 
@@ -18,12 +17,14 @@ let token_can_move_to_space tok space { spaces; players; _ } =
   in_adjacent && (not space_occupied) && next_level <> 4
   && next_level <= current_level + 1
 
+exception Bad_token
+
 let move_token_to_space tok space board =
   let player1, player2 = board.players in
   let p1t1, p1t2 = player1 in
-  if tok = p1t1 then Ok { board with players = ((space, p1t2), player2) }
-  else if tok = p1t2 then Ok { board with players = ((p1t1, space), player2) }
-  else Error "token not found in player 1's tokens"
+  if tok = p1t1 then { board with players = ((space, p1t2), player2) }
+  else if tok = p1t2 then { board with players = ((p1t1, space), player2) }
+  else raise Bad_token
 
 let token_can_build_on_space tok space { spaces; players; _ } =
   let player1, player2 = players in
@@ -54,16 +55,16 @@ let spaces_tok_can_build_on tok board : space list =
 let possible_moves_for_tok tok board =
   spaces_tok_can_move_to tok board
   |> List.map (fun s ->
-         ( s,
-           spaces_tok_can_build_on s
-             (move_token_to_space tok s board |> Result.get_ok) ))
+         (tok, (s, spaces_tok_can_build_on s (move_token_to_space tok s board))))
 
 let play_full_turn tok to_space build_space board =
   board
   |> move_token_to_space tok to_space
-  |> Result.get_ok |> build_on_space build_space |> complete_turn
+  |> build_on_space build_space |> complete_turn
 
 let tokens_height tok { spaces; _ } = SpacesMap.find tok spaces
 
-let heights_around_token tok { spaces; _ } =
-  List.map (fun s -> SpacesMap.find s spaces) (adjacent_spaces tok)
+let heights_around_token tok board =
+  List.map
+    (fun s -> SpacesMap.find s board.spaces)
+    (spaces_tok_can_move_to tok board)

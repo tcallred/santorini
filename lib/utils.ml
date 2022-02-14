@@ -10,3 +10,7 @@ let list_comp l1 l2 =
 
 let nth2d lst i j = List.nth (List.nth lst i) j
 let nth3d lst i j k = List.nth (List.nth (List.nth lst k) j) i
+
+let average lst =
+  if List.length lst = 0 then 0
+  else List.fold_left (fun a b -> a + b) 0 lst / List.length lst
