@@ -62,3 +62,11 @@ let adjacent_spaces (row, col) =
     (row + 1, col + 1);
   ]
   |> List.filter (fun (r, c) -> r >= 1 && r <= 5 && c >= 1 && c <= 5)
+
+let rec random_space () : space =
+  let s1, s2 = (Random.int 5 + 1, Random.int 5 + 1) in
+  if s1 = s2 then random_space () else (s1, s2)
+
+let rec random_space_not_in (lst : space list) : space =
+  let s1, s2 = (Random.int 5 + 1, Random.int 5 + 1) in
+  if List.mem (s1, s2) lst || s1 = s2 then random_space_not_in lst else (s1, s2)

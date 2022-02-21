@@ -17,6 +17,8 @@ let token_can_move_to_space tok space { spaces; players; _ } =
   in_adjacent && (not space_occupied) && next_level <> 4
   && next_level <= current_level + 1
 
+let tokens_height tok { spaces; _ } = SpacesMap.find tok spaces
+
 exception Bad_token
 
 let move_token_to_space tok space board =
@@ -26,15 +28,16 @@ let move_token_to_space tok space board =
   else if tok = p1t2 then { board with players = ((p1t1, space), player2) }
   else raise Bad_token
 
-let token_can_build_on_space tok space { spaces; players; _ } =
-  let player1, player2 = players in
+let token_can_build_on_space tok space board =
+  let player1, player2 = board.players in
   let p1t1, p1t2 = player1 in
   let p2t1, p2t2 = player2 in
   let all_toks = List.filter (fun t -> t <> tok) [ p1t1; p1t2; p2t1; p2t2 ] in
   let space_occupied = List.mem space all_toks in
   let in_adjacent = List.mem space (adjacent_spaces tok) in
-  let space_level = level_at space spaces in
-  in_adjacent && (not space_occupied) && space_level < 4
+  let space_level = level_at space board.spaces in
+  let tok_on_win_space = tokens_height tok board = 3 in 
+  in_adjacent && (not space_occupied) && space_level < 4 && (not tok_on_win_space)
 
 let build_on_space space board =
   { board with spaces = build_on space board.spaces }
@@ -57,12 +60,11 @@ let possible_moves_for_tok tok board =
   |> List.map (fun s ->
          (tok, (s, spaces_tok_can_build_on s (move_token_to_space tok s board))))
 
-let play_full_turn tok to_space build_space board =
-  board
-  |> move_token_to_space tok to_space
-  |> build_on_space build_space |> complete_turn
 
-let tokens_height tok { spaces; _ } = SpacesMap.find tok spaces
+let play_full_turn tok to_space build_space board =
+  let after_move = move_token_to_space tok to_space board in
+  if tokens_height to_space board = 3 then complete_turn after_move
+  else build_on_space build_space after_move |> complete_turn
 
 let heights_around_token tok board =
   List.map
