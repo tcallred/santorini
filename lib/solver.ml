@@ -1,5 +1,6 @@
 open Board
 open Utils
+open Option
 
 let max_depth = 3
 
@@ -15,7 +16,7 @@ let score_tokens_surroundings tok board =
   average (heights_around_token tok board)
 
 let score_token tok board =
-  score_tokens_standing tok board + score_tokens_surroundings tok board
+  score_tokens_standing tok board + (score_tokens_surroundings tok board / 3)
 
 let win_condition board =
   let _, (t1, t2) = board.players in
@@ -30,22 +31,15 @@ let evaluate_position board =
   p2score - p1score
 
 let rec minimax (board : Board.board) maximizing_player alpha beta depth :
-    Board.board * int =
+    Board.board option * int =
   if depth = max_depth || win_condition board then
-    (board, evaluate_position board)
-  else if maximizing_player then
-    let (p1t1, p1t2), _ = board.players in
-    let moves =
-      possible_moves_for_tok p1t1 board @ possible_moves_for_tok p1t2 board
-    in
-    let best = (new_board board.players, Int.min_int) in
-    best_move moves board best alpha beta maximizing_player depth
+    (some board, evaluate_position board)
   else
-    let (p2t1, p2t2), _ = board.players in
+    let (t1, t2), _ = board.players in
     let moves =
-      possible_moves_for_tok p2t1 board @ possible_moves_for_tok p2t2 board
+      possible_moves_for_tok t1 board @ possible_moves_for_tok t2 board
     in
-    let best = (new_board board.players, Int.max_int) in
+    let best = (none, if maximizing_player then Int.min_int else Int.max_int) in
     best_move moves board best alpha beta maximizing_player depth
 
 and best_move moves board best alpha beta maximizing_player depth =
@@ -55,8 +49,12 @@ and best_move moves board best alpha beta maximizing_player depth =
       let _, curr_best_score = best in
       let tok, (to_space, build_moves) = move in
       let next_board, score =
-        best_build tok to_space build_moves board best alpha beta
-          maximizing_player depth
+        if tokens_height to_space board = 3 then
+          let next = play_full_turn tok to_space (1, 1) board in
+          minimax next (not maximizing_player) alpha beta (depth + 1)
+        else
+          best_build tok to_space build_moves board best alpha beta
+            maximizing_player depth
       in
       if maximizing_player then
         let next_best =
@@ -91,7 +89,7 @@ and best_build tok to_space build_moves board best alpha beta maximizing_player
       in
       if maximizing_player then
         let next_best =
-          if score > curr_best_score then (next_board, score) else best
+          if score > curr_best_score then (some next_board, score) else best
         in
         let _, next_best_score = next_best in
         let next_alpha = max alpha next_best_score in
@@ -101,7 +99,7 @@ and best_build tok to_space build_moves board best alpha beta maximizing_player
             maximizing_player depth
       else
         let next_best =
-          if score < curr_best_score then (next_board, score) else best
+          if score < curr_best_score then (some next_board, score) else best
         in
         let _, next_best_score = next_best in
         let next_beta = max beta next_best_score in
@@ -113,4 +111,4 @@ and best_build tok to_space build_moves board best alpha beta maximizing_player
 let board_after_chosen_move (board : Board.board) : Board.board =
   let b, _ = minimax board true Int.min_int Int.max_int 0 in
   (* Printf.printf "Board with score %d" score; *)
-  b
+  Option.get b
