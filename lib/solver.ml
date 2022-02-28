@@ -38,6 +38,7 @@ let rec minimax (board : Board.board) maximizing_player alpha beta depth :
     let (t1, t2), _ = board.players in
     let moves =
       possible_move_seqs_for_tok t1 board @ possible_move_seqs_for_tok t2 board
+      |> List.sort (fun a b -> List.length a - List.length b)
     in
     let best = (none, if maximizing_player then Int.min_int else Int.max_int) in
     best_move moves board best alpha beta maximizing_player depth

@@ -32,3 +32,5 @@ let string_to_board (str : string) =
 
 let json_string =
   "{\"players\":[[[2,3],[4,4]],[[2,5],[3,5]]],\"spaces\":[[0,0,0,0,2],[1,1,2,0,0],[1,0,0,3,0],[0,0,3,0,0],[0,0,0,1,4]],\"turn\":18}"
+
+let test_board = json_string |> string_to_board |> Result.get_ok

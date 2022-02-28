@@ -74,9 +74,9 @@ let possible_move_seqs_for_tok tok board : move list list =
         let spot_after_move =
           match m with Move { dest; _ } -> dest | Build _ -> raise Bad_token
         in
-        List.map
-          (fun b -> [ m; Build b ])
-          (spaces_tok_can_build_on spot_after_move board_after_move))
+        let builds = spaces_tok_can_build_on spot_after_move board_after_move in
+        if List.length builds = 0 then [ [ m ] ]
+        else List.map (fun b -> [ m; Build b ]) builds)
       move_moves
   in
   List.concat move_seqs
