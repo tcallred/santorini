@@ -19,13 +19,14 @@ let score_token tok board =
   score_tokens_standing tok board + (score_tokens_surroundings tok board / 3)
 
 let win_condition board =
-  let _, (t1, t2) = board.players in
+  let _, player2 = board.players in
+  let t1, t2 = player2.tokens in
   tokens_height t1 board = 3 || tokens_height t2 board = 3
 
 let evaluate_position board =
   let player1, player2 = board.players in
-  let p1t1, p1t2 = player1 in
-  let p2t1, p2t2 = player2 in
+  let p1t1, p1t2 = player1.tokens in
+  let p2t1, p2t2 = player2.tokens in
   let p1score = score_token p1t1 board + score_token p1t2 board in
   let p2score = score_token p2t1 board + score_token p2t2 board in
   p2score - p1score
@@ -35,7 +36,8 @@ let rec minimax (board : Board.board) maximizing_player alpha beta depth :
   if depth = max_depth || win_condition board then
     (some board, evaluate_position board)
   else
-    let (t1, t2), _ = board.players in
+    let player1, _ = board.players in
+    let t1, t2 = player1.tokens in
     let moves =
       possible_move_seqs_for_tok t1 board @ possible_move_seqs_for_tok t2 board
       |> List.sort (fun a b -> List.length a - List.length b)

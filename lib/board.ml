@@ -8,8 +8,8 @@ let new_board players = { turn = 0; spaces = new_spaces; players }
 
 let token_can_move_to_space tok space { spaces; players; _ } =
   let player1, player2 = players in
-  let p1t1, p1t2 = player1 in
-  let p2t1, p2t2 = player2 in
+  let p1t1, p1t2 = player1.tokens in
+  let p2t1, p2t2 = player2.tokens in
   let other_toks = List.filter (fun t -> t <> tok) [ p1t1; p1t2; p2t1; p2t2 ] in
   let current_level = level_at tok spaces in
   let next_level = level_at space spaces in
@@ -24,15 +24,17 @@ exception Bad_token
 
 let move_token_to_space tok space board =
   let player1, player2 = board.players in
-  let p1t1, p1t2 = player1 in
-  if tok = p1t1 then { board with players = ((space, p1t2), player2) }
-  else if tok = p1t2 then { board with players = ((p1t1, space), player2) }
+  let p1t1, p1t2 = player1.tokens in
+  if tok = p1t1 then
+    { board with players = ({ player1 with tokens = (space, p1t2) }, player2) }
+  else if tok = p1t2 then
+    { board with players = ({ player1 with tokens = (p1t1, space) }, player2) }
   else raise Bad_token
 
 let token_can_build_on_space tok space board =
   let player1, player2 = board.players in
-  let p1t1, p1t2 = player1 in
-  let p2t1, p2t2 = player2 in
+  let p1t1, p1t2 = player1.tokens in
+  let p2t1, p2t2 = player2.tokens in
   let all_toks = List.filter (fun t -> t <> tok) [ p1t1; p1t2; p2t1; p2t2 ] in
   let space_occupied = List.mem space all_toks in
   let in_adjacent = List.mem space (adjacent_spaces tok) in
