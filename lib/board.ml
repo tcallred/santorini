@@ -115,10 +115,12 @@ let possible_twice_moves (once_moves : move list) board : move list =
     (fun m ->
       match m with
       | Move { from; dest } ->
-          play_move (Move { from; dest }) board
-          |> spaces_tok_can_move_to dest
-          |> List.filter (fun s -> s <> from)
-          |> List.map (fun s -> TwiceMove { from; first = dest; second = s })
+          if tokens_height dest board = 3 then []
+          else
+            play_move (Move { from; dest }) board
+            |> spaces_tok_can_move_to dest
+            |> List.filter (fun s -> s <> from)
+            |> List.map (fun s -> TwiceMove { from; first = dest; second = s })
       | _ -> raise Bad_move)
     once_moves
   |> List.concat
