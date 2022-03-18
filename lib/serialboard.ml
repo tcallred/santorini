@@ -34,7 +34,7 @@ let string_to_board (str : string) =
 (*let json_string =
   "{\"players\":[[[2,3],[4,4]],[[2,5],[3,5]]],\"spaces\":[[0,0,0,0,2],[1,1,2,0,0],[1,0,0,3,0],[0,0,3,0,0],[0,0,0,1,4]],\"turn\":18}" *)
 
-let json_string =
+let json_string1 =
   {| 
 {"players":[{"card":"Artemis","tokens":[[2,3],[4,4]]},
             {"card":"Prometheus","tokens":[[2,5],[3,5]]}],
@@ -42,4 +42,14 @@ let json_string =
   "turn":18}
 |}
 
-let test_board = json_string |> string_to_board |> Result.get_ok
+let test_board1 = json_string1 |> string_to_board |> Result.get_ok
+
+let json_string2 =
+  {| 
+{"players":[{"card":"Apollo","tokens":[[2,3],[4,4]]},
+            {"card":"Prometheus","tokens":[[2,4],[3,5]]}],
+  "spaces":[[0,0,0,0,2],[1,1,2,0,0],[1,0,0,3,0],[0,0,3,0,0],[0,0,0,1,4]],
+  "turn":18}
+|}
+
+let test_board2 = json_string2 |> string_to_board |> Result.get_ok

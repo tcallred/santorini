@@ -2,7 +2,11 @@ open Spaces
 open Player
 
 type board = { turn : int; spaces : spaces; players : player * player }
-type move = Move of { from : space; dest : space } | Build of space
+
+type move =
+  | Move of { from : space; dest : space }
+  | Build of space
+  | Swap of { from : space; other : space }
 
 let new_board players = { turn = 0; spaces = new_spaces; players }
 
@@ -45,6 +49,37 @@ let token_can_build_on_space tok space board =
 let build_on_space space board =
   { board with spaces = build_on space board.spaces }
 
+let token_can_swap_to_space tok space { spaces; players; _ } =
+  let _, player2 = players in
+  let p2t1, p2t2 = player2.tokens in
+  let current_level = level_at tok spaces in
+  let next_level = level_at space spaces in
+  let in_adjacent = List.mem space (adjacent_spaces tok) in
+  in_adjacent && next_level <> 4
+  && next_level <= current_level + 1
+  && (space = p2t1 || space = p2t2)
+
+let perform_swap (from : token) (other : token) board =
+  let player1, player2 = board.players in
+  let p1t1, p1t2 = player1.tokens in
+  let p2t1, p2t2 = player2.tokens in
+  {
+    board with
+    players =
+      ( {
+          player1 with
+          tokens =
+            ( (if p1t1 = from then other else p1t1),
+              if p1t2 = from then other else p1t2 );
+        },
+        {
+          player2 with
+          tokens =
+            ( (if p2t1 = other then from else p2t1),
+              if p2t2 = other then from else p2t2 );
+        } );
+  }
+
 let complete_turn board =
   { board with turn = board.turn + 1; players = swap_players board.players }
 
@@ -58,30 +93,50 @@ let spaces_tok_can_build_on tok board : space list =
     (fun s -> token_can_build_on_space tok s board)
     (adjacent_spaces tok)
 
+let spaces_tok_can_swap_with tok board : space list =
+  List.filter
+    (fun s -> token_can_swap_to_space tok s board)
+    (adjacent_spaces tok)
+
 let play_move (m : move) board =
   match m with
   | Move { from; dest } -> move_token_to_space from dest board
   | Build s -> build_on_space s board
+  | Swap { from; other } -> perform_swap from other board
 
-let possible_move_seqs_for_tok tok board : move list list =
-  let move_moves =
+exception Bad_move
+
+let possible_action_seqs_for_tok tok board (card : card) : move list list =
+  let move_actions =
     List.map
       (fun s -> Move { from = tok; dest = s })
       (spaces_tok_can_move_to tok board)
   in
-  let move_seqs =
+  let first_actions =
+    match card with
+    | NoCard -> move_actions
+    | Apollo ->
+        List.map
+          (fun s -> Swap { from = tok; other = s })
+          (spaces_tok_can_swap_with tok board)
+        @ move_actions
+  in
+  let action_seqs =
     List.map
       (fun m ->
         let board_after_move = play_move m board in
         let spot_after_move =
-          match m with Move { dest; _ } -> dest | Build _ -> raise Bad_token
+          match m with
+          | Move { dest; _ } -> dest
+          | Build _ -> raise Bad_move
+          | Swap { other; _ } -> other
         in
         let builds = spaces_tok_can_build_on spot_after_move board_after_move in
         if List.length builds = 0 then [ [ m ] ]
         else List.map (fun b -> [ m; Build b ]) builds)
-      move_moves
+      first_actions
   in
-  List.concat move_seqs
+  List.concat action_seqs
 
 let play_full_turn (moves : move list) board =
   List.fold_left (fun b m -> play_move m b) board moves |> complete_turn

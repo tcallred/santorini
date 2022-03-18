@@ -3,8 +3,12 @@ open Player
 
 type serial_player = { card : string; tokens : space list } [@@deriving yojson]
 
-let card_to_string (card : card) : string = match card with NoCard -> ""
-let string_to_card (s : string) : card = match s with _ -> NoCard
+let card_to_string (card : card) : string =
+  match card with NoCard -> "" | Apollo -> "Apollo"
+
+let string_to_card (s : string) : card =
+  match s with "Apollo" -> Apollo | _ -> NoCard
+
 let tokens_to_list (t1, t2) : space list = [ t1; t2 ]
 
 let list_to_tokens (tokens : token list) =
