@@ -7,6 +7,10 @@ type move =
   | Move of { from : space; dest : space }
   | Build of space
   | Swap of { from : space; other : space }
+  | TwiceMove of { from : space; first : space; second : space }
+
+exception Bad_token
+exception Bad_move
 
 let new_board players = { turn = 0; spaces = new_spaces; players }
 
@@ -23,8 +27,6 @@ let token_can_move_to_space tok space { spaces; players; _ } =
   && next_level <= current_level + 1
 
 let tokens_height tok { spaces; _ } = SpacesMap.find tok spaces
-
-exception Bad_token
 
 let move_token_to_space tok space board =
   let player1, player2 = board.players in
@@ -80,6 +82,9 @@ let perform_swap (from : token) (other : token) board =
         } );
   }
 
+let move_twice from first second board =
+  move_token_to_space from first board |> move_token_to_space first second
+
 let complete_turn board =
   { board with turn = board.turn + 1; players = swap_players board.players }
 
@@ -103,8 +108,19 @@ let play_move (m : move) board =
   | Move { from; dest } -> move_token_to_space from dest board
   | Build s -> build_on_space s board
   | Swap { from; other } -> perform_swap from other board
+  | TwiceMove { from; first; second } -> move_twice from first second board
 
-exception Bad_move
+let possible_twice_moves (once_moves : move list) board : move list =
+  List.map
+    (fun m ->
+      match m with
+      | Move { from; dest } ->
+          play_move (Move { from; dest }) board
+          |> spaces_tok_can_move_to dest
+          |> List.map (fun s -> TwiceMove { from; first = dest; second = s })
+      | _ -> raise Bad_move)
+    once_moves
+  |> List.concat
 
 let possible_action_seqs_for_tok tok board (card : card) : move list list =
   let move_actions =
@@ -120,18 +136,23 @@ let possible_action_seqs_for_tok tok board (card : card) : move list list =
           (fun s -> Swap { from = tok; other = s })
           (spaces_tok_can_swap_with tok board)
         @ move_actions
+    | Artemis -> possible_twice_moves move_actions board @ move_actions
   in
   let action_seqs =
     List.map
       (fun m ->
-        let board_after_move = play_move m board in
-        let spot_after_move =
+        let board_after_first_action = play_move m board in
+        let spot_after_first_action =
           match m with
           | Move { dest; _ } -> dest
           | Build _ -> raise Bad_move
           | Swap { other; _ } -> other
+          | TwiceMove { second; _ } -> second
         in
-        let builds = spaces_tok_can_build_on spot_after_move board_after_move in
+        let builds =
+          spaces_tok_can_build_on spot_after_first_action
+            board_after_first_action
+        in
         if List.length builds = 0 then [ [ m ] ]
         else List.map (fun b -> [ m; Build b ]) builds)
       first_actions

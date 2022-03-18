@@ -1,6 +1,6 @@
 open Spaces
 
-type card = NoCard | Apollo
+type card = NoCard | Apollo | Artemis
 type token = space
 type player = { card : card; tokens : token * token }
 type player_list = space list list [@@deriving yojson]
