@@ -117,6 +117,7 @@ let possible_twice_moves (once_moves : move list) board : move list =
       | Move { from; dest } ->
           play_move (Move { from; dest }) board
           |> spaces_tok_can_move_to dest
+          |> List.filter (fun s -> s <> from)
           |> List.map (fun s -> TwiceMove { from; first = dest; second = s })
       | _ -> raise Bad_move)
     once_moves
