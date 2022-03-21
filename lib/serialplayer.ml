@@ -11,6 +11,7 @@ let card_to_string (card : card) : string =
   | Atlas -> "Atlas"
   | Demeter -> "Demeter"
   | Hephastus -> "Hephastus"
+  | Minotaur -> "Minotaur"
 
 let string_to_card (s : string) : card =
   match s with
@@ -19,6 +20,7 @@ let string_to_card (s : string) : card =
   | "Atlas" -> Atlas
   | "Demeter" -> Demeter
   | "Hephastus" -> Hephastus
+  | "Minotaur" -> Minotaur
   | _ -> NoCard
 
 let tokens_to_list (t1, t2) : space list = [ t1; t2 ]

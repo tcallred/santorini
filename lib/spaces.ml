@@ -52,6 +52,14 @@ let top_off space spaces =
     (fun space_val -> Option.map (fun _ -> 4) space_val)
     spaces
 
+let on_board space spaces = SpacesMap.mem space spaces
+
+let opposite_side space pivot =
+  let s1, s2 = space in
+  let p1, p2 = pivot in
+  let d1, d2 = (p1 - s1, p2 - s2) in
+  (p1 + d1, p2 + d2)
+
 let level_at = SpacesMap.find
 let can_build_on space spaces = level_at space spaces < 4
 

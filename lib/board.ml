@@ -11,6 +11,7 @@ type move =
   | TwiceBuild of { first : space; second : space }
   | TopOff of space
   | DoubleBuild of space
+  | Push of { from : space; victim : space; pushed_to : space }
 
 exception Bad_token
 exception Bad_move
@@ -64,6 +65,21 @@ let token_can_swap_to_space tok space { spaces; players; _ } =
   && next_level <= current_level + 1
   && (space = p2t1 || space = p2t2)
 
+let token_can_push_into_space tok space { spaces; players; _ } =
+  let _, player2 = players in
+  let p2t1, p2t2 = player2.tokens in
+  let push_space = opposite_side tok space in
+  let can_go_into_push_space =
+    on_board push_space spaces && level_at push_space spaces < 4
+  in
+  let current_level = level_at tok spaces in
+  let next_level = level_at space spaces in
+  let in_adjacent = List.mem space (adjacent_spaces tok) in
+  in_adjacent && next_level <> 4
+  && next_level <= current_level + 1
+  && (space = p2t1 || space = p2t2)
+  && can_go_into_push_space
+
 let perform_swap (from : token) (other : token) board =
   let player1, player2 = board.players in
   let p1t1, p1t2 = player1.tokens in
@@ -82,6 +98,27 @@ let perform_swap (from : token) (other : token) board =
           tokens =
             ( (if p2t1 = other then from else p2t1),
               if p2t2 = other then from else p2t2 );
+        } );
+  }
+
+let perform_push from victim pushed_to board =
+  let player1, player2 = board.players in
+  let p1t1, p1t2 = player1.tokens in
+  let p2t1, p2t2 = player2.tokens in
+  {
+    board with
+    players =
+      ( {
+          player1 with
+          tokens =
+            ( (if p1t1 = from then victim else p1t1),
+              if p1t2 = from then victim else p1t2 );
+        },
+        {
+          player2 with
+          tokens =
+            ( (if p2t1 = victim then pushed_to else p2t1),
+              if p2t2 = victim then pushed_to else p2t2 );
         } );
   }
 
@@ -114,6 +151,11 @@ let spaces_tok_can_swap_with tok board : space list =
     (fun s -> token_can_swap_to_space tok s board)
     (adjacent_spaces tok)
 
+let spaces_tok_can_push_into tok board : space list =
+  List.filter
+    (fun s -> token_can_push_into_space tok s board)
+    (adjacent_spaces tok)
+
 let play_move (m : move) board =
   match m with
   | Move { from; dest } -> move_token_to_space from dest board
@@ -123,6 +165,7 @@ let play_move (m : move) board =
   | TwiceBuild { first; second } -> build_twice first second board
   | TopOff s -> top_off_space s board
   | DoubleBuild s -> perform_double_build s board
+  | Push { from; victim; pushed_to } -> perform_push from victim pushed_to board
 
 let possible_twice_moves (once_moves : move list) board : move list =
   List.map
@@ -151,7 +194,7 @@ let possible_top_offs (build_spaces : space list) board : move list =
          0 <= h && h <= 2)
   |> List.map (fun s -> TopOff s)
 
-let possilbe_double_builds (build_spaces : space list) board : move list =
+let possible_double_builds (build_spaces : space list) board : move list =
   build_spaces
   |> List.filter (fun s ->
          let h = tokens_height s board in
@@ -172,6 +215,12 @@ let possible_action_seqs_for_tok tok board (card : card) : move list list =
           (spaces_tok_can_swap_with tok board)
         @ move_actions
     | Artemis -> possible_twice_moves move_actions board @ move_actions
+    | Minotaur ->
+        List.map
+          (fun s ->
+            Push { from = tok; victim = s; pushed_to = opposite_side tok s })
+          (spaces_tok_can_push_into tok board)
+        @ move_actions
     | _ -> move_actions
   in
   let action_seqs =
@@ -183,6 +232,7 @@ let possible_action_seqs_for_tok tok board (card : card) : move list list =
           | Move { dest; _ } -> dest
           | Swap { other; _ } -> other
           | TwiceMove { second; _ } -> second
+          | Push { victim; _ } -> victim
           | _ -> raise Bad_move
         in
         let builds =
@@ -194,7 +244,7 @@ let possible_action_seqs_for_tok tok board (card : card) : move list list =
           match card with
           | Atlas -> possible_top_offs builds board @ build_actions
           | Demeter -> possible_twice_builds builds @ build_actions
-          | Hephastus -> possilbe_double_builds builds board @ build_actions
+          | Hephastus -> possible_double_builds builds board @ build_actions
           | _ -> build_actions
         in
         if List.length second_actions = 0 then [ [ m ] ]
