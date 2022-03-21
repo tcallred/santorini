@@ -10,6 +10,7 @@ type move =
   | TwiceMove of { from : space; first : space; second : space }
   | TwiceBuild of { first : space; second : space }
   | TopOff of space
+  | DoubleBuild of space
 
 exception Bad_token
 exception Bad_move
@@ -93,6 +94,8 @@ let build_twice first second board =
 let top_off_space (space : space) board =
   { board with spaces = top_off space board.spaces }
 
+let perform_double_build s board = build_on_space s board |> build_on_space s
+
 let complete_turn board =
   { board with turn = board.turn + 1; players = swap_players board.players }
 
@@ -119,6 +122,7 @@ let play_move (m : move) board =
   | TwiceMove { from; first; second } -> move_twice from first second board
   | TwiceBuild { first; second } -> build_twice first second board
   | TopOff s -> top_off_space s board
+  | DoubleBuild s -> perform_double_build s board
 
 let possible_twice_moves (once_moves : move list) board : move list =
   List.map
@@ -146,6 +150,13 @@ let possible_top_offs (build_spaces : space list) board : move list =
          let h = tokens_height s board in
          0 <= h && h <= 2)
   |> List.map (fun s -> TopOff s)
+
+let possilbe_double_builds (build_spaces : space list) board : move list =
+  build_spaces
+  |> List.filter (fun s ->
+         let h = tokens_height s board in
+         0 = h || h = 1)
+  |> List.map (fun s -> DoubleBuild s)
 
 let possible_action_seqs_for_tok tok board (card : card) : move list list =
   let move_actions =
@@ -183,6 +194,7 @@ let possible_action_seqs_for_tok tok board (card : card) : move list list =
           match card with
           | Atlas -> possible_top_offs builds board @ build_actions
           | Demeter -> possible_twice_builds builds @ build_actions
+          | Hephastus -> possilbe_double_builds builds board @ build_actions
           | _ -> build_actions
         in
         if List.length second_actions = 0 then [ [ m ] ]
