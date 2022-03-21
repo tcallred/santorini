@@ -46,7 +46,7 @@ let test_board1 = json_string1 |> string_to_board |> Result.get_ok
 
 let json_string2 =
   {| 
-{"players":[{"card":"Artemis","tokens":[[2,3],[4,4]]},
+{"players":[{"card":"Demeter","tokens":[[2,3],[4,4]]},
             {"card":"Prometheus","tokens":[[2,4],[3,5]]}],
   "spaces":[[0,0,0,0,2],[1,1,2,0,0],[1,0,0,3,0],[0,0,3,0,0],[0,0,0,1,4]],
   "turn":18}

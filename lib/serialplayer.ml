@@ -4,10 +4,18 @@ open Player
 type serial_player = { card : string; tokens : space list } [@@deriving yojson]
 
 let card_to_string (card : card) : string =
-  match card with NoCard -> "" | Apollo -> "Apollo" | Artemis -> "Artemis"
+  match card with
+  | NoCard -> ""
+  | Apollo -> "Apollo"
+  | Artemis -> "Artemis"
+  | Demeter -> "Demeter"
 
 let string_to_card (s : string) : card =
-  match s with "Apollo" -> Apollo | "Artemis" -> Artemis | _ -> NoCard
+  match s with
+  | "Apollo" -> Apollo
+  | "Artemis" -> Artemis
+  | "Demeter" -> Demeter
+  | _ -> NoCard
 
 let tokens_to_list (t1, t2) : space list = [ t1; t2 ]
 
