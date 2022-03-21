@@ -1,6 +1,15 @@
 open Spaces
 
-type card = NoCard | Apollo | Artemis | Atlas | Demeter | Hephastus | Minotaur
+type card =
+  | NoCard
+  | Apollo
+  | Artemis
+  | Atlas
+  | Demeter
+  | Hephastus
+  | Minotaur
+  | Prometheus
+
 type token = space
 type player = { card : card; tokens : token * token }
 type player_list = space list list [@@deriving yojson]

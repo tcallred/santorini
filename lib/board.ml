@@ -12,6 +12,7 @@ type move =
   | TopOff of space
   | DoubleBuild of space
   | Push of { from : space; victim : space; pushed_to : space }
+  | BuildMove of { build : space; from : space; dest : space }
 
 exception Bad_token
 exception Bad_move
@@ -133,6 +134,9 @@ let top_off_space (space : space) board =
 
 let perform_double_build s board = build_on_space s board |> build_on_space s
 
+let perform_build_move from build dest board =
+  build_on_space build board |> move_token_to_space from dest
+
 let complete_turn board =
   { board with turn = board.turn + 1; players = swap_players board.players }
 
@@ -166,6 +170,7 @@ let play_move (m : move) board =
   | TopOff s -> top_off_space s board
   | DoubleBuild s -> perform_double_build s board
   | Push { from; victim; pushed_to } -> perform_push from victim pushed_to board
+  | BuildMove { from; build; dest } -> perform_build_move from build dest board
 
 let possible_twice_moves (once_moves : move list) board : move list =
   List.map
@@ -201,6 +206,14 @@ let possible_double_builds (build_spaces : space list) board : move list =
          0 = h || h = 1)
   |> List.map (fun s -> DoubleBuild s)
 
+let possible_build_moves tok board =
+  spaces_tok_can_build_on tok board
+  |> List.filter (fun s -> tokens_height s board < tokens_height tok board)
+  |> List.map (fun s ->
+         spaces_tok_can_move_to s (play_move (Build s) board)
+         |> List.map (fun ms -> BuildMove { from = tok; build = s; dest = ms }))
+  |> List.concat
+
 let possible_action_seqs_for_tok tok board (card : card) : move list list =
   let move_actions =
     List.map
@@ -221,6 +234,7 @@ let possible_action_seqs_for_tok tok board (card : card) : move list list =
             Push { from = tok; victim = s; pushed_to = opposite_side tok s })
           (spaces_tok_can_push_into tok board)
         @ move_actions
+    | Prometheus -> possible_build_moves tok board @ move_actions
     | _ -> move_actions
   in
   let action_seqs =
@@ -233,6 +247,7 @@ let possible_action_seqs_for_tok tok board (card : card) : move list list =
           | Swap { other; _ } -> other
           | TwiceMove { second; _ } -> second
           | Push { victim; _ } -> victim
+          | BuildMove { dest; _ } -> dest
           | _ -> raise Bad_move
         in
         let builds =
