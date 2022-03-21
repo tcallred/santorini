@@ -8,12 +8,14 @@ let card_to_string (card : card) : string =
   | NoCard -> ""
   | Apollo -> "Apollo"
   | Artemis -> "Artemis"
+  | Atlas -> "Atlas"
   | Demeter -> "Demeter"
 
 let string_to_card (s : string) : card =
   match s with
   | "Apollo" -> Apollo
   | "Artemis" -> Artemis
+  | "Atlas" -> Atlas
   | "Demeter" -> Demeter
   | _ -> NoCard
 

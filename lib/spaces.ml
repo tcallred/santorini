@@ -47,6 +47,11 @@ let build_on space spaces =
         space_val)
     spaces
 
+let top_off space spaces =
+  SpacesMap.update space
+    (fun space_val -> Option.map (fun _ -> 4) space_val)
+    spaces
+
 let level_at = SpacesMap.find
 let can_build_on space spaces = level_at space spaces < 4
 
