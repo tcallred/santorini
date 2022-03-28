@@ -50,8 +50,7 @@ let token_can_build_on_space tok space board =
   let space_occupied = List.mem space all_toks in
   let in_adjacent = List.mem space (adjacent_spaces tok) in
   let space_level = level_at space board.spaces in
-  let tok_on_win_space = tokens_height tok board = 3 in
-  in_adjacent && (not space_occupied) && space_level < 4 && not tok_on_win_space
+  in_adjacent && (not space_occupied) && space_level < 4
 
 let build_on_space space board =
   { board with spaces = build_on space board.spaces }
@@ -210,9 +209,17 @@ let possible_build_moves tok board =
   spaces_tok_can_build_on tok board
   |> List.filter (fun s -> tokens_height s board < tokens_height tok board)
   |> List.map (fun s ->
-         spaces_tok_can_move_to s (play_move (Build s) board)
+         spaces_tok_can_move_to tok (play_move (Build s) board)
          |> List.map (fun ms -> BuildMove { from = tok; build = s; dest = ms }))
   |> List.concat
+
+let wins_after_move m board =
+  match m with
+  | Move { dest; _ } -> tokens_height dest board = 3
+  | TwiceMove { second; _ } -> tokens_height second board = 3
+  | Push { victim; _ } -> tokens_height victim board = 3
+  | BuildMove { dest; _ } -> tokens_height dest board = 3
+  | _ -> false
 
 let possible_action_seqs_for_tok tok board (card : card) : move list list =
   let move_actions =
@@ -262,7 +269,7 @@ let possible_action_seqs_for_tok tok board (card : card) : move list list =
           | Hephastus -> possible_double_builds builds board @ build_actions
           | _ -> build_actions
         in
-        if List.length second_actions = 0 then [ [ m ] ]
+        if wins_after_move m board then [ [ m ] ]
         else List.map (fun second_act -> [ m; second_act ]) second_actions)
       first_actions
   in
