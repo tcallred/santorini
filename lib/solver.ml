@@ -84,7 +84,8 @@ and best_move move_seqs board best alpha beta maximizing_player depth =
         in
         let _, next_best_score = next_best in
         let next_alpha = max alpha next_best_score in
-        if beta <= alpha then next_best
+        if beta <= next_alpha then
+          next_best
         else
           best_move rest_moves board next_best next_alpha beta maximizing_player
             depth
@@ -93,13 +94,15 @@ and best_move move_seqs board best alpha beta maximizing_player depth =
           if score < curr_best_score then (some next_board, score) else best
         in
         let _, next_best_score = next_best in
-        let next_beta = max beta next_best_score in
-        if beta <= alpha then next_best
+        let next_beta = min beta next_best_score in
+        if next_beta <= alpha then
+          next_best
         else
           best_move rest_moves board next_best alpha next_beta maximizing_player
             depth
 
 let board_after_chosen_move (board : Board.board) : Board.board =
+  (* let _ = print_endline "Entering" in *)
   let b, _ = minimax board board true Int.min_int Int.max_int 0 in
   (* Printf.printf "Board with score %d" score; *)
   Option.get b
