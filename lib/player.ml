@@ -9,6 +9,7 @@ type card =
   | Hephastus
   | Minotaur
   | Prometheus
+  | Pan
 
 type token = space
 type player = { card : card; tokens : token * token }

@@ -213,9 +213,14 @@ let possible_build_moves tok board =
          |> List.map (fun ms -> BuildMove { from = tok; build = s; dest = ms }))
   |> List.concat
 
-let wins_after_move m board =
+let wins_after_move m board card =
   match m with
-  | Move { dest; _ } -> tokens_height dest board = 3
+  | Move { from; dest } -> (
+      match card with
+      | Pan ->
+          tokens_height dest board = 3
+          || tokens_height from board - tokens_height dest board >= 2
+      | _ -> tokens_height dest board = 3)
   | TwiceMove { second; _ } -> tokens_height second board = 3
   | Push { victim; _ } -> tokens_height victim board = 3
   | BuildMove { dest; _ } -> tokens_height dest board = 3
@@ -269,7 +274,7 @@ let possible_action_seqs_for_tok tok board (card : card) : move list list =
           | Hephastus -> possible_double_builds builds board @ build_actions
           | _ -> build_actions
         in
-        if wins_after_move m board then [ [ m ] ]
+        if wins_after_move m board card then [ [ m ] ]
         else List.map (fun second_act -> [ m; second_act ]) second_actions)
       first_actions
   in
