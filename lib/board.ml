@@ -207,9 +207,11 @@ let possible_double_builds (build_spaces : space list) board : move list =
 
 let possible_build_moves tok board =
   spaces_tok_can_build_on tok board
-  |> List.filter (fun s -> tokens_height s board < tokens_height tok board)
   |> List.map (fun s ->
-         spaces_tok_can_move_to tok (play_move (Build s) board)
+         let next_board = play_move (Build s) board in
+         spaces_tok_can_move_to tok next_board
+         |> List.filter (fun ms ->
+                tokens_height ms next_board <= tokens_height tok next_board)
          |> List.map (fun ms -> BuildMove { from = tok; build = s; dest = ms }))
   |> List.concat
 
@@ -269,7 +271,7 @@ let possible_action_seqs_for_tok tok board (card : card) : move list list =
         let build_actions = List.map (fun b -> Build b) builds in
         let second_actions =
           match card with
-          | Atlas -> possible_top_offs builds board @ build_actions
+          | Atlas -> build_actions @ possible_top_offs builds board
           | Demeter -> possible_twice_builds builds @ build_actions
           | Hephastus -> possible_double_builds builds board @ build_actions
           | _ -> build_actions

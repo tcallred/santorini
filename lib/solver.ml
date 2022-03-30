@@ -56,7 +56,7 @@ let evaluate_position board prev_board =
 
 let rec minimax (board : Board.board) (prev_board : Board.board)
     maximizing_player alpha beta depth : Board.board option * int =
-  if depth = max_depth || win_condition board prev_board then
+  if (depth = max_depth || win_condition board prev_board) && depth > 0 then
     (some board, evaluate_position board prev_board)
   else
     let player1, _ = board.players in
@@ -84,8 +84,7 @@ and best_move move_seqs board best alpha beta maximizing_player depth =
         in
         let _, next_best_score = next_best in
         let next_alpha = max alpha next_best_score in
-        if beta <= next_alpha then
-          next_best
+        if beta <= next_alpha then next_best
         else
           best_move rest_moves board next_best next_alpha beta maximizing_player
             depth
@@ -95,8 +94,7 @@ and best_move move_seqs board best alpha beta maximizing_player depth =
         in
         let _, next_best_score = next_best in
         let next_beta = min beta next_best_score in
-        if next_beta <= alpha then
-          next_best
+        if next_beta <= alpha then next_best
         else
           best_move rest_moves board next_best alpha next_beta maximizing_player
             depth
