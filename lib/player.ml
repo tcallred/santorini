@@ -1,15 +1,25 @@
 open Spaces
-open Utils
+
+type card =
+  | NoCard
+  | Apollo
+  | Artemis
+  | Atlas
+  | Demeter
+  | Hephastus
+  | Minotaur
+  | Prometheus
+  | Pan
 
 type token = space
-type player = token * token
+type player = { card : card; tokens : token * token }
 type player_list = space list list [@@deriving yojson]
 
-let list_of_players ((p1t1, p1t2), (p2t1, p2t2)) =
-  [ [ p1t1; p1t2 ]; [ p2t1; p2t2 ] ]
+let list_of_players (player1, player2) = [ player1; player2 ]
 
-let players_of_list (lst : token list list) : player * player =
-  ((nth2d lst 0 0, nth2d lst 0 1), (nth2d lst 1 0, nth2d lst 1 1))
+let players_of_list (players : player list) : player * player =
+  let open List in
+  (nth players 0, nth players 1)
 
 let swap_players (player1, player2) : player * player = (player2, player1)
 
